@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* next-themes html'e .dark sınıfı ekler; dark: varyantı ona bağlanır */
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+}
