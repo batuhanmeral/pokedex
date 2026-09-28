@@ -3,6 +3,27 @@
 /* next-themes html'e .dark sınıfı ekler; dark: varyantı ona bağlanır */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Koyu tema paleti. neutral-* sınıfları projede yalnızca dark: altında
+ * kullanıldığı için skalayı burada yeniden tanımlamak tüm koyu temayı
+ * tonlar; light mode (slate-*) etkilenmez.
+ *
+ * Saf siyah yerine hafif mavi-gri sapmalı tonlar: zemin ölü görünmüyor,
+ * kartlar zeminden ayrışıyor.
+ */
+@theme {
+  --color-neutral-950: #15161a; /* sayfa zemini */
+  --color-neutral-900: #1d1f24; /* kartlar, dropdown'lar */
+  --color-neutral-800: #2a2d34; /* kenarlıklar, ikincil zemin */
+  --color-neutral-700: #3a3e47; /* hover kenarlığı */
+  --color-neutral-600: #4a4f5a;
+  --color-neutral-500: #868c99; /* en soluk metin — kartta 4.9:1 kontrast */
+  --color-neutral-400: #9aa1ae; /* ikincil metin */
+  --color-neutral-300: #c3c8d2;
+  --color-neutral-200: #dfe3ea;
+  --color-neutral-100: #eef1f5;
+}
+
 body {
   @apply bg-slate-50 text-slate-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
 }

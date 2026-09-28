@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import AuroraBackground from "@/components/AuroraBackground";
 import Navbar from "@/components/Navbar";
 import ThemeProvider from "@/components/ThemeProvider";
 import {
@@ -52,6 +53,7 @@ export default async function RootLayout({ children, params }: LayoutProps) {
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider>
+          <AuroraBackground />
           <div className="flex min-h-screen flex-col">
             <Navbar locale={locale} dict={dict} />
             <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-8 sm:px-6">
