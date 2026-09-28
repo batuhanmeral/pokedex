@@ -139,6 +139,21 @@ export interface MatchupGroup {
   types: string[];
 }
 
+/** Tek bir tipin hasar ilişkileri (tip adlarına indirgenmiş hâli) */
+export interface TypeRelations {
+  /** Bu tipe 2x hasar veren tipler */
+  doubleFrom: string[];
+  /** Bu tipe ½x hasar veren tipler */
+  halfFrom: string[];
+  /** Bu tipe hiç hasar vermeyen tipler */
+  noFrom: string[];
+  /** Bu tipin 2x hasar verdiği tipler */
+  doubleTo: string[];
+}
+
+/** 18 tipin tamamı için hasar ilişkileri; tip adıyla indekslenir. */
+export type TypeChart = Record<string, TypeRelations>;
+
 export interface LevelUpMove {
   name: string;
   level: number;

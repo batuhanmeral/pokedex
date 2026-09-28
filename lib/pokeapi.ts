@@ -14,6 +14,7 @@ import type {
   PokemonListItem,
   PokemonListResponse,
   PokemonSpecies,
+  TypeChart,
   TypeData,
 } from "./types";
 
@@ -160,28 +161,63 @@ export async function getEvolutionStages(
 }
 
 /**
- * Pokemon'un tiplerine göre savunma çarpanlarını hesaplar.
- * Çift tipte çarpanlar birleşir (örn. 2 × 2 = 4x zayıflık).
- * 1x (nötr) tipler sonuca dahil edilmez; gruplar çarpana göre azalan sıralıdır.
+ * 18 tipin tamamının hasar ilişkilerini tek seferde çeker. İstekler paralel
+ * atılır ve günlük önbelleğe girer; hem detay sayfası hem takım analizi
+ * aynı önbelleği paylaşır.
+ */
+export async function getTypeChart(): Promise<TypeChart> {
+  const entries = await Promise.all(
+    ALL_TYPES.map(async (type) => {
+      const data = await fetchApi<TypeData>(`/type/${type}`);
+      const { damage_relations: relations } = data;
+      return [
+        type,
+        {
+          doubleFrom: relations.double_damage_from.map((t) => t.name),
+          halfFrom: relations.half_damage_from.map((t) => t.name),
+          noFrom: relations.no_damage_from.map((t) => t.name),
+          doubleTo: relations.double_damage_to.map((t) => t.name),
+        },
+      ] as const;
+    }),
+  );
+
+  return Object.fromEntries(entries);
+}
+
+/**
+ * Bir Pokemon'un tiplerine göre, saldıran her tip için savunma çarpanını
+ * döndürür. Çift tipte çarpanlar birleşir (örn. 2 × 2 = 4x zayıflık).
+ *
+ * Saf fonksiyon: istek atmaz, bu yüzden istemci tarafında da çağrılabilir.
+ */
+export function defensiveMultipliers(
+  types: string[],
+  chart: TypeChart,
+): Record<string, number> {
+  const multipliers: Record<string, number> = {};
+  for (const type of ALL_TYPES) multipliers[type] = 1;
+
+  for (const type of types) {
+    const relations = chart[type];
+    if (!relations) continue;
+    for (const t of relations.doubleFrom) multipliers[t] *= 2;
+    for (const t of relations.halfFrom) multipliers[t] *= 0.5;
+    for (const t of relations.noFrom) multipliers[t] *= 0;
+  }
+
+  return multipliers;
+}
+
+/**
+ * Savunma çarpanlarını çarpana göre gruplar. 1x (nötr) tipler sonuca dahil
+ * edilmez; gruplar çarpana göre azalan sıralıdır.
  */
 export async function getDefensiveMatchups(
   types: string[],
 ): Promise<MatchupGroup[]> {
-  const typeData = await Promise.all(
-    types.map((type) => fetchApi<TypeData>(`/type/${type}`)),
-  );
-
-  const multipliers: Record<string, number> = {};
-  for (const type of ALL_TYPES) multipliers[type] = 1;
-
-  for (const data of typeData) {
-    for (const t of data.damage_relations.double_damage_from)
-      multipliers[t.name] *= 2;
-    for (const t of data.damage_relations.half_damage_from)
-      multipliers[t.name] *= 0.5;
-    for (const t of data.damage_relations.no_damage_from)
-      multipliers[t.name] *= 0;
-  }
+  const chart = await getTypeChart();
+  const multipliers = defensiveMultipliers(types, chart);
 
   const groups = new Map<number, string[]>();
   for (const [type, multiplier] of Object.entries(multipliers)) {

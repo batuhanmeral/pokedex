@@ -95,6 +95,28 @@ const tr = {
     metaTitle: "Takımını Oluştur",
     metaDescription:
       "6 Pokemonluk hayalindeki takımı kur ve tek bağlantıyla paylaş.",
+    analysis: {
+      title: "Takım Analizi",
+      defensive: "Savunma kapsaması",
+      defensiveHint:
+        "Saldıran her tipe karşı kaç takım üyesinin zayıf ya da dirençli olduğu.",
+      weak: "zayıf",
+      resist: "dirençli",
+      immune: "bağışık",
+      neutral: "Tüm üyeler nötr",
+      commonWeaknesses: "Ortak zayıflıklar",
+      commonWeaknessesHint:
+        "En az iki üyenin zayıf olduğu ve hiçbir üyenin karşılamadığı tipler. Bu takımın en büyük riski.",
+      commonWeaknessesNone:
+        "Ortak zayıflık yok — hiçbir tip takımı aynı anda hem vurup hem karşılıksız kalmıyor.",
+      uncovered: "Dirençsiz tipler",
+      uncoveredHint: "Hiçbir üyenin direnç ya da bağışıklık göstermediği tipler.",
+      uncoveredNone: "Her tipe karşı en az bir dirençli üye var.",
+      offenseHint:
+        "Üyelerin tiplerine göre süper etkili vurulabilen tipler (hamleler değil, tipler baz alınır).",
+      noOffense: "Süper etkili vurulamayan tipler",
+      noOffenseNone: "Takım her tipe süper etkili vurabiliyor.",
+    },
   },
   notFound: {
     title: "Pokemon bulunamadı",
@@ -227,6 +249,28 @@ const en: Dictionary = {
     metaTitle: "Build Your Team",
     metaDescription:
       "Build your dream team of 6 Pokemon and share it with a single link.",
+    analysis: {
+      title: "Team Analysis",
+      defensive: "Defensive coverage",
+      defensiveHint:
+        "How many team members are weak to or resist each attacking type.",
+      weak: "weak",
+      resist: "resist",
+      immune: "immune",
+      neutral: "All members neutral",
+      commonWeaknesses: "Shared weaknesses",
+      commonWeaknessesHint:
+        "Types at least two members are weak to and no member resists. This is the team's biggest risk.",
+      commonWeaknessesNone:
+        "No shared weaknesses — no type hits several members without something resisting it.",
+      uncovered: "Unresisted types",
+      uncoveredHint: "Types no member resists or is immune to.",
+      uncoveredNone: "Every type is resisted by at least one member.",
+      offenseHint:
+        "Types the team can hit super effectively, based on member types rather than their movesets.",
+      noOffense: "Types hit for no extra damage",
+      noOffenseNone: "The team can hit every type super effectively.",
+    },
   },
   notFound: {
     title: "Pokemon not found",

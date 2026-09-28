@@ -3,12 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import TeamAnalysisPanel from "./TeamAnalysis";
 import TypeBadge from "./TypeBadge";
+import type { PokemonCardData } from "@/lib/grid-data";
 import type { Dictionary, Locale } from "@/lib/i18n";
 import { artworkUrl, formatPokemonId, formatPokemonName } from "@/lib/pokeapi";
+import { analyzeTeam } from "@/lib/team-analysis";
 import { getTypeStyle } from "@/lib/type-colors";
-import type { Pokemon, PokemonListItem } from "@/lib/types";
+import type { TypeChart } from "@/lib/types";
 
 const TEAM_SIZE = 6;
 const MAX_SUGGESTIONS = 8;
@@ -38,7 +41,7 @@ function TeamCombobox({
   placeholder,
   noResultsText,
 }: {
-  list: PokemonListItem[];
+  list: PokemonCardData[];
   excluded: number[];
   onSelect: (id: number) => void;
   disabled: boolean;
@@ -61,7 +64,7 @@ function TeamCombobox({
       .slice(0, MAX_SUGGESTIONS);
   }, [list, excluded, query]);
 
-  const select = (pokemon: PokemonListItem) => {
+  const select = (pokemon: PokemonCardData) => {
     onSelect(pokemon.id);
     setQuery("");
     setOpen(false);
@@ -135,39 +138,17 @@ function TeamCombobox({
 }
 
 function TeamSlot({
-  id,
+  member,
   locale,
   dict,
   onRemove,
 }: {
-  id: number | null;
+  member: PokemonCardData | null;
   locale: Locale;
   dict: Dictionary;
   onRemove: (id: number) => void;
 }) {
-  const [pokemon, setPokemon] = useState<Pokemon | null>(null);
-
-  useEffect(() => {
-    setPokemon(null);
-    if (id === null) return;
-
-    let cancelled = false;
-    fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-        return res.json() as Promise<Pokemon>;
-      })
-      .then((data) => {
-        if (!cancelled) setPokemon(data);
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
-  if (id === null) {
+  if (member === null) {
     return (
       <div className="flex min-h-56 flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 text-slate-300 dark:border-neutral-800 dark:text-neutral-600">
         <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-slate-200 dark:border-neutral-700">
@@ -178,7 +159,8 @@ function TeamSlot({
     );
   }
 
-  const style = getTypeStyle(pokemon?.types[0]?.type.name ?? "normal");
+  const { id, types } = member;
+  const style = getTypeStyle(types[0] ?? "normal");
 
   return (
     <div className="relative flex min-h-56 flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
@@ -215,7 +197,7 @@ function TeamSlot({
           />
           <Image
             src={artworkUrl(id)}
-            alt={pokemon?.name ?? String(id)}
+            alt={member.name}
             fill
             sizes="96px"
             className="relative object-contain drop-shadow-sm"
@@ -225,16 +207,16 @@ function TeamSlot({
           {formatPokemonId(id)}
         </p>
         <p className="text-center font-semibold">
-          {pokemon ? formatPokemonName(pokemon.name) : "…"}
+          {formatPokemonName(member.name)}
         </p>
       </Link>
 
       <div className="mt-1.5 flex min-h-6 gap-1.5">
-        {pokemon?.types.map(({ type }) => (
+        {types.map((type) => (
           <TypeBadge
-            key={type.name}
-            type={type.name}
-            label={dict.typeNames[type.name] ?? formatPokemonName(type.name)}
+            key={type}
+            type={type}
+            label={dict.typeNames[type] ?? formatPokemonName(type)}
           />
         ))}
       </div>
@@ -244,10 +226,12 @@ function TeamSlot({
 
 export default function TeamBuilderClient({
   list,
+  chart,
   dict,
   locale,
 }: {
-  list: PokemonListItem[];
+  list: PokemonCardData[];
+  chart: TypeChart;
   dict: Dictionary;
   locale: Locale;
 }) {
@@ -255,10 +239,11 @@ export default function TeamBuilderClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const validIds = useMemo(
-    () => new Set(list.map((pokemon) => pokemon.id)),
+  const byId = useMemo(
+    () => new Map(list.map((pokemon) => [pokemon.id, pokemon])),
     [list],
   );
+  const validIds = useMemo(() => new Set(byId.keys()), [byId]);
   const [team, setTeam] = useState<number[]>(() =>
     parseTeamParam(searchParams.get("p"), validIds),
   );
@@ -298,10 +283,26 @@ export default function TeamBuilderClient({
     }
   };
 
-  const slots: (number | null)[] = [
-    ...team,
-    ...Array<null>(TEAM_SIZE - team.length).fill(null),
+  const members = useMemo(
+    () =>
+      team.flatMap((id) => {
+        const member = byId.get(id);
+        return member ? [member] : [];
+      }),
+    [team, byId],
+  );
+
+  const slots: (PokemonCardData | null)[] = [
+    ...members,
+    ...Array<null>(TEAM_SIZE - members.length).fill(null),
   ];
+
+  // Tip tablosu sabit, üyeler prop olarak geldiği için analiz ağ isteği
+  // gerektirmez; takım değiştiğinde anında yeniden hesaplanır.
+  const analysis = useMemo(
+    () => (members.length > 0 ? analyzeTeam(members, chart) : null),
+    [members, chart],
+  );
 
   const card =
     "rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 sm:p-8";
@@ -363,16 +364,18 @@ export default function TeamBuilderClient({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {slots.map((id, index) => (
+        {slots.map((member, index) => (
           <TeamSlot
-            key={id ?? `empty-${index}`}
-            id={id}
+            key={member?.id ?? `empty-${index}`}
+            member={member}
             locale={locale}
             dict={dict}
             onRemove={remove}
           />
         ))}
       </div>
+
+      {analysis && <TeamAnalysisPanel analysis={analysis} dict={dict} />}
     </div>
   );
 }
