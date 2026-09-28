@@ -30,6 +30,23 @@ import {
 import { getTypeStyle } from "@/lib/type-colors";
 import type { MatchupGroup, Pokemon, PokemonSpecies } from "@/lib/types";
 
+/*
+ * Detay sayfası dinamik segment kullandığı için varsayılan olarak her
+ * istekte yeniden render ediliyordu; bu da Pokemon başına 100'ü aşan
+ * PokeAPI isteği demekti. revalidate ile render sonucu tam rota
+ * önbelleğine giriyor: ilk ziyaretçiden sonrası hazır HTML alıyor.
+ */
+export const revalidate = 86400;
+
+/*
+ * Boş liste + varsayılan dynamicParams: hiçbir sayfa build'de üretilmiyor,
+ * ama rota ISR'a kaydoluyor. revalidate tek başına yetmiyor; dinamik segment
+ * generateStaticParams olmadan tam rota önbelleğine hiç girmiyor.
+ */
+export function generateStaticParams() {
+  return [];
+}
+
 interface PageProps {
   params: Promise<{ locale: string; id: string }>;
 }

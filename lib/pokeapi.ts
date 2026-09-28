@@ -160,16 +160,13 @@ export async function getEvolutionStages(
   return stages;
 }
 
-/**
- * 18 tipin tamamının hasar ilişkilerini tek seferde çeker. İstekler paralel
- * atılır ve günlük önbelleğe girer; hem detay sayfası hem takım analizi
- * aynı önbelleği paylaşır.
- */
-export async function getTypeChart(): Promise<TypeChart> {
+/** Verilen tiplerin hasar ilişkilerini çeker; paralel ve günlük önbellekli. */
+async function fetchTypeRelations(types: string[]): Promise<TypeChart> {
   const entries = await Promise.all(
-    ALL_TYPES.map(async (type) => {
-      const data = await fetchApi<TypeData>(`/type/${type}`);
-      const { damage_relations: relations } = data;
+    types.map(async (type) => {
+      const { damage_relations: relations } = await fetchApi<TypeData>(
+        `/type/${type}`,
+      );
       return [
         type,
         {
@@ -183,6 +180,15 @@ export async function getTypeChart(): Promise<TypeChart> {
   );
 
   return Object.fromEntries(entries);
+}
+
+/**
+ * 18 tipin tamamının hasar ilişkileri. Takım analizi her tipe karşı durumu
+ * hesapladığı için tabloya bütün olarak ihtiyaç duyar; detay sayfası ise
+ * yalnızca Pokemon'un kendi tiplerini çeker (bkz. getDefensiveMatchups).
+ */
+export async function getTypeChart(): Promise<TypeChart> {
+  return fetchTypeRelations(ALL_TYPES);
 }
 
 /**
@@ -216,7 +222,9 @@ export function defensiveMultipliers(
 export async function getDefensiveMatchups(
   types: string[],
 ): Promise<MatchupGroup[]> {
-  const chart = await getTypeChart();
+  // Çarpanlar için yalnızca Pokemon'un kendi tipleri gerekiyor; tam tabloyu
+  // çekmek detay sayfasına 16 gereksiz istek bindirirdi.
+  const chart = await fetchTypeRelations(types);
   const multipliers = defensiveMultipliers(types, chart);
 
   const groups = new Map<number, string[]>();
