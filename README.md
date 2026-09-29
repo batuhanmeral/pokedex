@@ -20,8 +20,9 @@ Pokedex brings every species from the first nine generations together in a singl
   - **Cry** — a speaker button plays the Pokemon's cry.
 - **Compare** (`/[locale]/compare`) — pick two Pokemon via searchable comboboxes and compare their base stats side by side; the higher value is highlighted.
 - **Team builder** (`/[locale]/team`) — assemble a team of up to 6 Pokemon with a searchable combobox. The team lives entirely in the URL query string, so a single "Share team" click copies a link that reproduces the exact team — no database needed.
+  - **Team analysis** — the panel below the slots answers where the team is exposed: shared weaknesses (types at least two members are weak to and none resists), unresisted types, types the team cannot hit super effectively, and a per-type grid of how many members are weak to or resist each of the 18 attacking types. Recomputed instantly on every change, with no extra requests.
 - **Random Pokemon** — a button next to the filters jumps to a random Pokemon's detail page.
-- **Dark mode** — system-aware theme with a manual toggle, implemented with `next-themes` and Tailwind's class-based dark variant.
+- **Dark mode** — system-aware theme with a manual toggle, implemented with `next-themes` and Tailwind's class-based dark variant. The dark palette sits on a blue-tinted grey rather than black, over a fixed aurora layer (two soft radial glows plus a fine grain) that is pure CSS — no JavaScript and no animation.
 - **i18n (TR/EN)** — locale-prefixed routes (`/tr`, `/en`) with middleware-based detection (cookie → `Accept-Language` → default) and a language switcher in the navbar.
 
 ## Tech Stack
@@ -52,12 +53,14 @@ Connect the repository to Vercel — no environment variables or extra configura
 
 | Screenshots |
 | :---: |
-| **Home — search, filters and the Pokemon grid** |
-| <img src="docs/pokedex.png" alt="Home page with search, type/generation filters and the Pokemon grid" width="720"> |
-| **Detail page — stats, type matchups, evolutions and moves** |
-| <img src="docs/pokemon.png" alt="Pokemon detail page with artwork, base stats, evolution chain and moves" width="720"> |
+| **Home — search, type/generation filters and the Pokemon grid** |
+| <img src="docs/pokedex.png" alt="Home page in dark mode showing the search field, type and generation filters, the Random Pokemon button and a grid of type-colored Pokemon cards" width="720"> |
+| **Detail page — base stats, type matchups and species info** |
+| <img src="docs/pokemon.png" alt="Charizard detail page showing official artwork, species info, base stat bars totalling 534, type matchups with 4x/2x/half/quarter/0x multipliers, and abilities" width="720"> |
+| **Team builder — six slots and the team analysis panel** |
+| <img src="docs/team.png" alt="Team builder with a full six-Pokemon team and the Team Analysis panel below it listing shared weaknesses, unresisted types and types hit for no extra damage" width="720"> |
 | **Compare — side-by-side base stats** |
-| <img src="docs/compare.png" alt="Compare page with two Pokemon selected and stats side by side" width="720"> |
+| <img src="docs/compare.png" alt="Compare page with Braixen and Kangaskhan selected and their base stats compared bar by bar, the higher value highlighted" width="720"> |
 
 ## License
 
