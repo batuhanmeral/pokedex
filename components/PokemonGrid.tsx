@@ -7,6 +7,7 @@ import RandomButton from "./RandomButton";
 import SearchBar from "./SearchBar";
 import type { PokemonCardData } from "@/lib/grid-data";
 import type { Dictionary, Locale } from "@/lib/i18n";
+import { filterPokemon } from "@/lib/pokemon-filter";
 
 const PAGE_SIZE = 60;
 
@@ -26,18 +27,15 @@ export default function PokemonGrid({
   );
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase().replace(/^#/, "");
-
-    return list.filter((pokemon) => {
-      if (q && !pokemon.name.toLowerCase().includes(q) && String(pokemon.id) !== q)
-        return false;
-      if (selectedType && !pokemon.types.includes(selectedType)) return false;
-      if (selectedGeneration && pokemon.generation !== selectedGeneration)
-        return false;
-      return true;
-    });
-  }, [list, query, selectedType, selectedGeneration]);
+  const filtered = useMemo(
+    () =>
+      filterPokemon(list, {
+        query,
+        type: selectedType,
+        generation: selectedGeneration,
+      }),
+    [list, query, selectedType, selectedGeneration],
+  );
 
   const visible = filtered.slice(0, visibleCount);
   const resetPage = () => setVisibleCount(PAGE_SIZE);

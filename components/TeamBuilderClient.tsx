@@ -10,28 +10,11 @@ import type { PokemonCardData } from "@/lib/grid-data";
 import type { Dictionary, Locale } from "@/lib/i18n";
 import { artworkUrl, formatPokemonId, formatPokemonName } from "@/lib/pokeapi";
 import { analyzeTeam } from "@/lib/team-analysis";
+import { parseTeamParam, TEAM_SIZE } from "@/lib/team-param";
 import { getTypeStyle } from "@/lib/type-colors";
 import type { TypeChart } from "@/lib/types";
 
-const TEAM_SIZE = 6;
 const MAX_SUGGESTIONS = 8;
-
-function parseTeamParam(
-  value: string | null,
-  validIds: Set<number>,
-): number[] {
-  if (!value) return [];
-
-  const ids: number[] = [];
-  for (const part of value.split(",")) {
-    const id = Number(part);
-    if (Number.isInteger(id) && validIds.has(id) && !ids.includes(id)) {
-      ids.push(id);
-    }
-    if (ids.length === TEAM_SIZE) break;
-  }
-  return ids;
-}
 
 function TeamCombobox({
   list,

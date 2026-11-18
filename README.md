@@ -38,12 +38,28 @@ Pokedex brings every species from the first nine generations together in a singl
 
 ## Development
 
+Requires Node.js `^22.12.0 || ^24 || >=26`.
+
 ```bash
 npm install
 npm run dev    # http://localhost:3000
 npm run build  # production build
-npm run smoke  # build + start + curl smoke test
 ```
+
+### Checks
+
+```bash
+npm test                            # unit tests, single run (Vitest)
+npx vitest run lib/pokeapi.test.ts  # a single test file
+npm run test:watch                  # watch mode
+npm run lint                        # ESLint (flat config)
+npm run typecheck                   # tsc --noEmit
+npm run check                       # lint + typecheck + tests with coverage thresholds
+npm run smoke                       # manual smoke check; run `npm run build` first
+```
+
+Tests never touch the network: PokeAPI is mocked and unmocked `fetch` calls fail the test.
+Detailed documentation lives in `.docs/` and is written in Turkish.
 
 ## Deploy
 

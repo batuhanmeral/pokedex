@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check": "npm run lint && npm run typecheck && npm run test:coverage",
     "smoke": "bash scripts/smoke.sh"
   },
   "dependencies": {
@@ -17,11 +22,16 @@
     "sharp": "^0.35.5"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "3.3.7",
     "@tailwindcss/postcss": "^4.1.8",
     "@types/node": "^22.15.29",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
+    "@vitest/coverage-v8": "5.0.5",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.20",
     "tailwindcss": "^4.1.8",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "5.0.5"
   }
 }
