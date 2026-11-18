@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import TeamAnalysisPanel from "./TeamAnalysis";
 import TypeBadge from "./TypeBadge";
 import type { PokemonCardData } from "@/lib/grid-data";
@@ -32,6 +32,7 @@ function TeamCombobox({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const listboxId = useId();
 
   const suggestions = useMemo(
     () => filterSuggestions(list, query, excluded),
@@ -72,11 +73,16 @@ function TeamCombobox({
         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-slate-300 focus:ring-4 focus:ring-slate-200/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-800 dark:bg-neutral-900 dark:placeholder:text-neutral-500 dark:focus:border-neutral-700 dark:focus:ring-neutral-800/60"
         role="combobox"
         aria-expanded={open}
+        aria-controls={listboxId}
         aria-label={placeholder}
       />
 
       {open && !disabled && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
+        <div
+          id={listboxId}
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
+        >
           {suggestions.length === 0 ? (
             <p className="px-4 py-3 text-sm text-slate-500 dark:text-neutral-400">
               {noResultsText}
