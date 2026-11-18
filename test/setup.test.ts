@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { getEncounters } from "@/lib/pokeapi";
 import { takeBlockedRequests } from "./setup";
 
@@ -13,7 +13,17 @@ describe("test setup network guard", () => {
   it("records blocked requests even when the code swallows the error", async () => {
     // getEncounters hataları yutup [] döner; engel yine de çağrıyı kaydeder,
     // böylece afterEach mock'u unutulmuş bir testi düşürebilir.
-    expect(await getEncounters(1)).toEqual([]);
-    expect(takeBlockedRequests()).toEqual(["https://pokeapi.co/api/v2/pokemon/1/encounters"]);
+    // Ağ hataları yeniden denendiği için her deneme ayrı kaydedilir.
+    vi.useFakeTimers();
+    try {
+      const result = getEncounters(1);
+      await vi.runAllTimersAsync();
+      expect(await result).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(takeBlockedRequests()).toEqual(
+      Array(3).fill("https://pokeapi.co/api/v2/pokemon/1/encounters"),
+    );
   });
 });

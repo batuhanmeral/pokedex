@@ -57,16 +57,47 @@ export function generationOf(id: number): number {
   return GENERATION_BOUNDS[GENERATION_BOUNDS.length - 1][1];
 }
 
-async function fetchApi<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    next: { revalidate: REVALIDATE_SECONDS },
-  });
+/**
+ * Build sırasında statik sayfalar için binlerce istek atılır; PokeAPI bu
+ * yükte bağlantıyı zaman zaman keser (fetch failed / ECONNRESET) ya da
+ * 429/5xx döner. Bu geçici hatalar artan beklemeyle (500ms, 1s) yeniden
+ * denenir; 404 gibi kalıcı hatalar hemen fırlatılır.
+ */
+const MAX_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 500;
 
-  if (!res.ok) {
-    throw new Error(`PokeAPI request failed (${res.status}): ${path}`);
+function isTransientStatus(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** `label` hata mesajında görünür (API yolu ya da tam URL). */
+async function fetchJson<T>(url: string, label: string): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    const isLastAttempt = attempt >= MAX_ATTEMPTS;
+    let res: Response;
+    try {
+      res = await fetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
+    } catch (error) {
+      if (isLastAttempt) throw error;
+      await sleep(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
+      continue;
+    }
+
+    if (res.ok) return res.json() as Promise<T>;
+
+    if (isLastAttempt || !isTransientStatus(res.status)) {
+      throw new Error(`PokeAPI request failed (${res.status}): ${label}`);
+    }
+    await sleep(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
   }
+}
 
-  return res.json() as Promise<T>;
+async function fetchApi<T>(path: string): Promise<T> {
+  return fetchJson<T>(`${BASE_URL}${path}`, path);
 }
 
 /** "https://pokeapi.co/api/v2/pokemon-species/25/" -> 25 */
@@ -116,13 +147,7 @@ export async function getPokemonSpecies(
 }
 
 async function fetchUrl<T>(url: string): Promise<T> {
-  const res = await fetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
-
-  if (!res.ok) {
-    throw new Error(`PokeAPI request failed (${res.status}): ${url}`);
-  }
-
-  return res.json() as Promise<T>;
+  return fetchJson<T>(url, url);
 }
 
 async function getEvolutionChain(url: string): Promise<EvolutionChain> {

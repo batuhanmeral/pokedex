@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { chart, pokemonWithMoves, typeResponse } from "@/test/fixtures";
 import { mockFetch } from "@/test/mock-fetch";
 import {
@@ -191,6 +191,15 @@ describe("PokeAPI requests (fetch mocked)", () => {
     });
   });
 
+  it("reports the full url when an absolute-url request fails", async () => {
+    mockFetch({
+      "/pokemon-species/1": { evolution_chain: { url: `${API}/evolution-chain/999/` } },
+    });
+    await expect(getEvolutionStages(1)).rejects.toThrow(
+      `PokeAPI request failed (404): ${API}/evolution-chain/999/`,
+    );
+  });
+
   it("builds the type chart from all 18 /type responses", async () => {
     const fetch = mockFetch(
       Object.fromEntries(
@@ -266,5 +275,100 @@ describe("PokeAPI requests (fetch mocked)", () => {
   it("returns no encounters when the request fails", async () => {
     mockFetch({});
     expect(await getEncounters(1)).toEqual([]);
+  });
+});
+
+describe("transient PokeAPI failures (fetch mocked)", () => {
+  // Build sırasında binlerce istek atılıyor; CI'da PokeAPI bağlantıyı zaman
+  // zaman kesiyordu (fetch failed / ECONNRESET).
+  const url = `${API}/pokemon/25`;
+  const ok = () => Response.json({ id: 25, name: "pikachu" });
+  const status = (code: number) => new Response("", { status: code });
+
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  function stubFetch(...results: Array<Response | Error>) {
+    const fn = vi.fn(async () => {
+      const next = results.shift();
+      if (!next) throw new Error("unexpected extra request");
+      if (next instanceof Error) throw next;
+      return next;
+    });
+    vi.stubGlobal("fetch", fn);
+    return fn;
+  }
+
+  async function run<T>(promise: Promise<T>) {
+    // Hata hemen yakalansın ki bekleyen redde "unhandled" uyarısı düşmesin
+    const settled = promise.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    await vi.runAllTimersAsync();
+    return settled;
+  }
+
+  it("retries a network error and returns the later response", async () => {
+    const fetch = stubFetch(new TypeError("fetch failed"), ok());
+    expect(await run(getPokemon(25))).toEqual({ value: { id: 25, name: "pikachu" } });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenLastCalledWith(url, { next: { revalidate: 86400 } });
+  });
+
+  it.each([429, 500, 503])("retries HTTP %i", async (code) => {
+    const fetch = stubFetch(status(code), ok());
+    expect(await run(getPokemon(25))).toEqual({ value: { id: 25, name: "pikachu" } });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry a client error such as 404", async () => {
+    const fetch = stubFetch(status(404));
+    const result = await run(getPokemon(25));
+    expect(result).toEqual({ error: new Error("PokeAPI request failed (404): /pokemon/25") });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives up after three attempts with the last error", async () => {
+    const fetch = stubFetch(status(503), new TypeError("fetch failed"), status(502));
+    const result = await run(getPokemon(25));
+    expect(result).toEqual({ error: new Error("PokeAPI request failed (502): /pokemon/25") });
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("waits with exponential backoff between attempts", async () => {
+    const fetch = stubFetch(new TypeError("fetch failed"), status(500), ok());
+    const promise = getPokemon(25);
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(499);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(999);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetch).toHaveBeenCalledTimes(3);
+    await expect(promise).resolves.toEqual({ id: 25, name: "pikachu" });
+  });
+
+  it("also retries absolute urls such as evolution chains", async () => {
+    const species = Response.json({ evolution_chain: { url: `${API}/evolution-chain/10/` } });
+    const chain = Response.json({
+      id: 10,
+      chain: {
+        species: { name: "pikachu", url: `${API}/pokemon-species/25/` },
+        evolution_details: [],
+        evolves_to: [],
+      },
+    });
+    const fetch = stubFetch(species, new TypeError("fetch failed"), chain);
+
+    const result = await run(getEvolutionStages(25));
+    expect(result).toMatchObject({ value: [[{ id: 25, name: "pikachu" }]] });
+    expect(fetch).toHaveBeenLastCalledWith(`${API}/evolution-chain/10/`, {
+      next: { revalidate: 86400 },
+    });
   });
 });
