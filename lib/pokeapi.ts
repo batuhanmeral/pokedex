@@ -1,8 +1,10 @@
 import { ALL_TYPES } from "./type-colors";
+import type { Dictionary } from "./i18n";
 import type {
   EncounterLocation,
   EvolutionChain,
   EvolutionChainLink,
+  EvolutionDetail,
   EvolutionStage,
   MachineData,
   MachineMove,
@@ -119,6 +121,59 @@ export function formatPokemonName(name: string): string {
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+/** Savunma çarpanını kesirli gösterime çevirir (0.5 -> "½×"). */
+export function formatMultiplier(multiplier: number): string {
+  if (multiplier === 0.5) return "½×";
+  if (multiplier === 0.25) return "¼×";
+  return `${multiplier}×`;
+}
+
+/**
+ * PokeAPI `gender_rate` değerini (8'de dişi oranı; -1 cinsiyetsiz) yüzde
+ * çiftine çevirir. Cinsiyetsiz türler için `null` döner.
+ */
+export function genderPercentages(
+  genderRate: number,
+): { male: number; female: number } | null {
+  if (genderRate < 0) return null;
+  const female = (genderRate / 8) * 100;
+  return { male: 100 - female, female };
+}
+
+/** Evrim koşulunu kısa, okunur bir etikete çevirir. */
+export function evolutionLabel(
+  detail: EvolutionDetail | null,
+  dict: Dictionary,
+): string | null {
+  if (!detail) return null;
+
+  const trigger = detail.trigger?.name;
+
+  if (trigger === "use-item" && detail.item) {
+    return formatPokemonName(detail.item.name);
+  }
+
+  if (trigger === "trade") {
+    return detail.held_item
+      ? `${dict.detail.evoTrade} + ${formatPokemonName(detail.held_item.name)}`
+      : dict.detail.evoTrade;
+  }
+
+  if (trigger === "level-up") {
+    const parts: string[] = [];
+    if (detail.min_level)
+      parts.push(`${dict.detail.evoLevelPrefix} ${detail.min_level}`);
+    if (detail.min_happiness) parts.push(dict.detail.evoHappiness);
+    if (detail.held_item) parts.push(formatPokemonName(detail.held_item.name));
+    if (detail.known_move) parts.push(formatPokemonName(detail.known_move.name));
+    if (detail.time_of_day === "day") parts.push(dict.detail.evoDay);
+    if (detail.time_of_day === "night") parts.push(dict.detail.evoNight);
+    return parts.length > 0 ? parts.join(" · ") : dict.detail.evoSpecial;
+  }
+
+  return dict.detail.evoSpecial;
 }
 
 /** Alternatif formlar hariç tüm Pokemonları ID sırasıyla döndürür. */

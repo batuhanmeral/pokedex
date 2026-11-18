@@ -1,11 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { chart, pokemonWithMoves, typeResponse } from "@/test/fixtures";
 import { mockFetch } from "@/test/mock-fetch";
+import { getDictionary } from "./i18n";
 import {
   artworkUrl,
   defensiveMultipliers,
+  evolutionLabel,
+  formatMultiplier,
   formatPokemonId,
   formatPokemonName,
+  genderPercentages,
   generationOf,
   getDefensiveMatchups,
   getEncounters,
@@ -18,6 +22,7 @@ import {
   idFromUrl,
 } from "./pokeapi";
 import { ALL_TYPES } from "./type-colors";
+import type { EvolutionDetail } from "./types";
 
 const API = "https://pokeapi.co/api/v2";
 
@@ -49,6 +54,95 @@ describe("formatting helpers", () => {
 
   it("builds the official artwork url from the id", () => {
     expect(artworkUrl(6)).toMatch(/\/official-artwork\/6\.png$/);
+  });
+
+  it("formats fractional and integer type multipliers", () => {
+    expect(formatMultiplier(0.25)).toBe("¼×");
+    expect(formatMultiplier(0.5)).toBe("½×");
+    expect(formatMultiplier(0)).toBe("0×");
+    expect(formatMultiplier(2)).toBe("2×");
+    expect(formatMultiplier(4)).toBe("4×");
+  });
+
+  it("computes male/female percentages or null for genderless species", () => {
+    expect(genderPercentages(-1)).toBeNull();
+    expect(genderPercentages(0)).toEqual({ male: 100, female: 0 });
+    expect(genderPercentages(1)).toEqual({ male: 87.5, female: 12.5 });
+    expect(genderPercentages(4)).toEqual({ male: 50, female: 50 });
+    expect(genderPercentages(8)).toEqual({ male: 0, female: 100 });
+  });
+});
+
+describe("evolutionLabel", () => {
+  const dict = getDictionary("en");
+  const detail = (overrides: Partial<EvolutionDetail>): EvolutionDetail => ({
+    trigger: { name: "level-up", url: "" },
+    min_level: null,
+    min_happiness: null,
+    min_beauty: null,
+    item: null,
+    held_item: null,
+    known_move: null,
+    location: null,
+    time_of_day: "",
+    needs_overworld_rain: false,
+    ...overrides,
+  });
+
+  it("returns null when no detail is present", () => {
+    expect(evolutionLabel(null, dict)).toBeNull();
+  });
+
+  it("formats item evolutions and falls back to special when item is missing", () => {
+    expect(
+      evolutionLabel(
+        detail({
+          trigger: { name: "use-item", url: "" },
+          item: { name: "water-stone", url: "" },
+        }),
+        dict,
+      ),
+    ).toBe("Water Stone");
+    expect(
+      evolutionLabel(detail({ trigger: { name: "use-item", url: "" } }), dict),
+    ).toBe("Special condition");
+  });
+
+  it("formats plain and held-item trade evolutions", () => {
+    expect(
+      evolutionLabel(detail({ trigger: { name: "trade", url: "" } }), dict),
+    ).toBe("Trade");
+    expect(
+      evolutionLabel(
+        detail({
+          trigger: { name: "trade", url: "" },
+          held_item: { name: "metal-coat", url: "" },
+        }),
+        dict,
+      ),
+    ).toBe("Trade + Metal Coat");
+  });
+
+  it("combines level-up conditions and falls back to special when empty or unknown", () => {
+    expect(evolutionLabel(detail({ min_level: 16 }), dict)).toBe("Lv. 16");
+    expect(
+      evolutionLabel(
+        detail({
+          min_happiness: 160,
+          held_item: { name: "razor-claw", url: "" },
+          known_move: { name: "ancient-power", url: "" },
+          time_of_day: "day",
+        }),
+        dict,
+      ),
+    ).toBe("Happiness · Razor Claw · Ancient Power · Day");
+    expect(
+      evolutionLabel(detail({ min_happiness: 160, time_of_day: "night" }), dict),
+    ).toBe("Happiness · Night");
+    expect(evolutionLabel(detail({}), dict)).toBe("Special condition");
+    expect(
+      evolutionLabel(detail({ trigger: { name: "shed", url: "" } }), dict),
+    ).toBe("Special condition");
   });
 });
 

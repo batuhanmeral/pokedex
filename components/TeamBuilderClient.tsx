@@ -9,12 +9,11 @@ import TypeBadge from "./TypeBadge";
 import type { PokemonCardData } from "@/lib/grid-data";
 import type { Dictionary, Locale } from "@/lib/i18n";
 import { artworkUrl, formatPokemonId, formatPokemonName } from "@/lib/pokeapi";
+import { filterSuggestions } from "@/lib/pokemon-filter";
 import { analyzeTeam } from "@/lib/team-analysis";
-import { parseTeamParam, TEAM_SIZE } from "@/lib/team-param";
+import { buildTeamQuery, parseTeamParam, TEAM_SIZE } from "@/lib/team-param";
 import { getTypeStyle } from "@/lib/type-colors";
 import type { TypeChart } from "@/lib/types";
-
-const MAX_SUGGESTIONS = 8;
 
 function TeamCombobox({
   list,
@@ -34,18 +33,10 @@ function TeamCombobox({
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
-  const suggestions = useMemo(() => {
-    const q = query.trim().toLowerCase().replace(/^#/, "");
-    const available = list.filter((pokemon) => !excluded.includes(pokemon.id));
-    if (!q) return available.slice(0, MAX_SUGGESTIONS);
-
-    return available
-      .filter(
-        (pokemon) =>
-          pokemon.name.toLowerCase().includes(q) || String(pokemon.id) === q,
-      )
-      .slice(0, MAX_SUGGESTIONS);
-  }, [list, excluded, query]);
+  const suggestions = useMemo(
+    () => filterSuggestions(list, query, excluded),
+    [list, excluded, query],
+  );
 
   const select = (pokemon: PokemonCardData) => {
     onSelect(pokemon.id);
@@ -234,8 +225,7 @@ export default function TeamBuilderClient({
 
   // Takım her değiştiğinde URL'i güncelle ki adres çubuğu paylaşılabilir olsun
   const syncUrl = (ids: number[]) => {
-    const query = ids.length > 0 ? `?p=${ids.join(",")}` : "";
-    router.replace(`${pathname}${query}`, { scroll: false });
+    router.replace(`${pathname}${buildTeamQuery(ids)}`, { scroll: false });
   };
 
   const add = (id: number) => {

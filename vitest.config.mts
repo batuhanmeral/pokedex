@@ -22,14 +22,14 @@ export default defineConfig({
       include: ["lib/**/*.ts", "proxy.ts", "components/**/*.tsx", "app/**/*.tsx"],
       exclude: ["lib/types.ts", "**/*.test.ts"],
       reporter: ["text", "html"],
-      // Eşikler ölçülen değerin ~1 puan altında (2026-11-18: st 37.2, br 25.9,
-      // fn 29.8, ln 36.0); kapsam arttıkça yükselt. lib/ saf mantık, sıkı tutulur.
+      // Eşikler ölçülen değerin ~1 puan altında (2026-11-18: st 45.3, br 38.8,
+      // fn 33.9, ln 43.1); kapsam arttıkça yükselt. lib/ saf mantık, %100 tutulur.
       thresholds: {
-        statements: 36,
-        branches: 24,
-        functions: 28,
-        lines: 35,
-        "lib/**/*.ts": { statements: 99, branches: 96, functions: 100, lines: 99 },
+        statements: 44,
+        branches: 37,
+        functions: 32,
+        lines: 42,
+        "lib/**/*.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
       },
     },
   },

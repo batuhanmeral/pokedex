@@ -63,4 +63,10 @@ describe("analyzeTeam", () => {
     expect(result.noOffenseAgainst).not.toContain("rock");
     expect(result.superEffectiveAgainst.length + result.noOffenseAgainst.length).toBe(18);
   });
+
+  it("ignores member types missing from the type chart", () => {
+    const result = analyzeTeam([member(1, "unknown")], chart);
+    expect(result.superEffectiveAgainst).toEqual([]);
+    expect(result.noOffenseAgainst).toEqual(ALL_TYPES);
+  });
 });

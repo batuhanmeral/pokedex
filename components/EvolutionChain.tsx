@@ -1,42 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Dictionary, Locale } from "@/lib/i18n";
-import type { EvolutionDetail, EvolutionStage } from "@/lib/types";
-import { formatPokemonId, formatPokemonName } from "@/lib/pokeapi";
-
-/** Evrim koşulunu kısa, okunur bir etikete çevirir. */
-function evolutionLabel(
-  detail: EvolutionDetail | null,
-  dict: Dictionary,
-): string | null {
-  if (!detail) return null;
-
-  const trigger = detail.trigger?.name;
-
-  if (trigger === "use-item" && detail.item) {
-    return formatPokemonName(detail.item.name);
-  }
-
-  if (trigger === "trade") {
-    return detail.held_item
-      ? `${dict.detail.evoTrade} + ${formatPokemonName(detail.held_item.name)}`
-      : dict.detail.evoTrade;
-  }
-
-  if (trigger === "level-up") {
-    const parts: string[] = [];
-    if (detail.min_level)
-      parts.push(`${dict.detail.evoLevelPrefix} ${detail.min_level}`);
-    if (detail.min_happiness) parts.push(dict.detail.evoHappiness);
-    if (detail.held_item) parts.push(formatPokemonName(detail.held_item.name));
-    if (detail.known_move) parts.push(formatPokemonName(detail.known_move.name));
-    if (detail.time_of_day === "day") parts.push(dict.detail.evoDay);
-    if (detail.time_of_day === "night") parts.push(dict.detail.evoNight);
-    return parts.length > 0 ? parts.join(" · ") : dict.detail.evoSpecial;
-  }
-
-  return dict.detail.evoSpecial;
-}
+import type { EvolutionStage } from "@/lib/types";
+import {
+  evolutionLabel,
+  formatPokemonId,
+  formatPokemonName,
+} from "@/lib/pokeapi";
 
 function EvolutionCard({
   stage,

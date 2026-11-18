@@ -21,3 +21,11 @@ export function parseTeamParam(
   }
   return ids;
 }
+
+/**
+ * Takım ID listesini URL sorgu ekine (`?p=6,25`) çevirir. Boş takım için
+ * boş dizge döner.
+ */
+export function buildTeamQuery(ids: number[]): string {
+  return ids.length > 0 ? `?p=${ids.join(",")}` : "";
+}

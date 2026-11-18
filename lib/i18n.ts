@@ -317,3 +317,17 @@ const dictionaries: Record<Locale, Dictionary> = { tr, en };
 export function getDictionary(locale: Locale): Dictionary {
   return dictionaries[locale] ?? dictionaries[defaultLocale];
 }
+
+/**
+ * Mevcut yolu karşı dile çevirir (`/tr/pokemon/25` → `/en/pokemon/25`).
+ */
+export function switchLocalePath(
+  pathname: string,
+  currentLocale: Locale,
+): { target: Locale; href: string } {
+  const target: Locale = currentLocale === "tr" ? "en" : "tr";
+  const segments = pathname.split("/");
+  segments[1] = target;
+  const href = segments.join("/");
+  return { target, href };
+}

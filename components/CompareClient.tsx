@@ -10,6 +10,7 @@ import {
   formatPokemonId,
   formatPokemonName,
 } from "@/lib/pokeapi";
+import { filterSuggestions } from "@/lib/pokemon-filter";
 import { getTypeStyle } from "@/lib/type-colors";
 import type { Pokemon, PokemonListItem } from "@/lib/types";
 
@@ -48,8 +49,6 @@ function usePokemon(id: string): { pokemon: Pokemon | null; loading: boolean } {
   return { pokemon: result.pokemon, loading: false };
 }
 
-const MAX_SUGGESTIONS = 8;
-
 function PokemonCombobox({
   list,
   onChange,
@@ -66,17 +65,10 @@ function PokemonCombobox({
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
-  const suggestions = useMemo(() => {
-    const q = query.trim().toLowerCase().replace(/^#/, "");
-    if (!q) return list.slice(0, MAX_SUGGESTIONS);
-
-    return list
-      .filter(
-        (pokemon) =>
-          pokemon.name.toLowerCase().includes(q) || String(pokemon.id) === q,
-      )
-      .slice(0, MAX_SUGGESTIONS);
-  }, [list, query]);
+  const suggestions = useMemo(
+    () => filterSuggestions(list, query),
+    [list, query],
+  );
 
   const select = (pokemon: PokemonListItem) => {
     onChange(String(pokemon.id));

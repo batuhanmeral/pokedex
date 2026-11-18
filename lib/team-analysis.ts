@@ -52,13 +52,10 @@ export function analyzeTeam(
     resist: 0,
     immune: 0,
   }));
-  const rowByType = new Map(rows.map((row) => [row.type, row]));
-
   for (const member of members) {
     const multipliers = defensiveMultipliers(member.types, chart);
-    for (const [attackingType, multiplier] of Object.entries(multipliers)) {
-      const row = rowByType.get(attackingType);
-      if (!row) continue;
+    for (const row of rows) {
+      const multiplier = multipliers[row.type];
       if (multiplier === 0) row.immune += 1;
       else if (multiplier > 1) row.weak += 1;
       else if (multiplier < 1) row.resist += 1;

@@ -22,3 +22,32 @@ export function filterPokemon(
     return true;
   });
 }
+
+export const MAX_SUGGESTIONS = 8;
+
+/**
+ * Karşılaştırma ve takım kurucu combobox'larının öneri filtresi: hariç tutulan
+ * ID'leri çıkarır, isim parçası ya da tam numaraya göre eşleştirir ve en fazla
+ * `limit` kayıt döndürür.
+ */
+export function filterSuggestions<T extends { id: number; name: string }>(
+  list: T[],
+  query: string,
+  excludedIds: readonly number[] = [],
+  limit = MAX_SUGGESTIONS,
+): T[] {
+  const q = query.trim().toLowerCase().replace(/^#/, "");
+  const available =
+    excludedIds.length > 0
+      ? list.filter((pokemon) => !excludedIds.includes(pokemon.id))
+      : list;
+
+  if (!q) return available.slice(0, limit);
+
+  return available
+    .filter(
+      (pokemon) =>
+        pokemon.name.toLowerCase().includes(q) || String(pokemon.id) === q,
+    )
+    .slice(0, limit);
+}

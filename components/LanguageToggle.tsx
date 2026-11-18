@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { Locale } from "@/lib/i18n";
+import { switchLocalePath, type Locale } from "@/lib/i18n";
 
 export default function LanguageToggle({
   locale,
@@ -12,11 +12,7 @@ export default function LanguageToggle({
   label: string;
 }) {
   const pathname = usePathname();
-  const target: Locale = locale === "tr" ? "en" : "tr";
-
-  const segments = pathname.split("/");
-  segments[1] = target;
-  const href = segments.join("/") || `/${target}`;
+  const { target, href } = switchLocalePath(pathname, locale);
 
   return (
     <Link

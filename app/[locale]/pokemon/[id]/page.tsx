@@ -15,8 +15,10 @@ import {
 } from "@/lib/i18n";
 import {
   artworkUrl,
+  formatMultiplier,
   formatPokemonId,
   formatPokemonName,
+  genderPercentages,
   generationOf,
   getDefensiveMatchups,
   getEncounters,
@@ -76,12 +78,6 @@ export async function generateMetadata({
   }
 }
 
-function formatMultiplier(multiplier: number): string {
-  if (multiplier === 0.5) return "½×";
-  if (multiplier === 0.25) return "¼×";
-  return `${multiplier}×`;
-}
-
 function MatchupRow({
   label,
   groups,
@@ -124,18 +120,18 @@ function GenderRatio({
   species: PokemonSpecies;
   dict: Dictionary;
 }) {
-  if (species.gender_rate < 0) {
+  const ratio = genderPercentages(species.gender_rate);
+  if (!ratio) {
     return <span>{dict.detail.genderless}</span>;
   }
 
-  const female = (species.gender_rate / 8) * 100;
-  const male = 100 - female;
-
   return (
     <span className="tabular-nums">
-      <span className="text-blue-500 dark:text-blue-400">♂ {male}%</span>
+      <span className="text-blue-500 dark:text-blue-400">♂ {ratio.male}%</span>
       {" · "}
-      <span className="text-pink-500 dark:text-pink-400">♀ {female}%</span>
+      <span className="text-pink-500 dark:text-pink-400">
+        ♀ {ratio.female}%
+      </span>
     </span>
   );
 }

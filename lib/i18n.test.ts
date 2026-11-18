@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { defaultLocale, getDictionary, isLocale, locales, type Locale } from "./i18n";
+import {
+  defaultLocale,
+  getDictionary,
+  isLocale,
+  locales,
+  switchLocalePath,
+  type Locale,
+} from "./i18n";
 import { ALL_TYPES } from "./type-colors";
 
 const STAT_NAMES = ["hp", "attack", "defense", "special-attack", "special-defense", "speed"];
@@ -29,5 +36,16 @@ describe("getDictionary", () => {
     const dict = getDictionary(locale);
     for (const type of ALL_TYPES) expect(dict.typeNames[type], type).toBeTruthy();
     for (const stat of STAT_NAMES) expect(dict.statLabels[stat], stat).toBeTruthy();
+  });
+});
+
+describe("switchLocalePath", () => {
+  it("switches the locale segment of a path while keeping nested segments", () => {
+    expect(switchLocalePath("/tr", "tr")).toEqual({ target: "en", href: "/en" });
+    expect(switchLocalePath("/en/pokemon/25", "en")).toEqual({
+      target: "tr",
+      href: "/tr/pokemon/25",
+    });
+    expect(switchLocalePath("", "tr")).toEqual({ target: "en", href: "/en" });
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseTeamParam, TEAM_SIZE } from "./team-param";
+import { buildTeamQuery, parseTeamParam, TEAM_SIZE } from "./team-param";
 
 const valid = new Set(Array.from({ length: 1025 }, (_, i) => i + 1));
 
@@ -23,5 +23,16 @@ describe("parseTeamParam", () => {
 
   it("still fills the team when invalid ids come first", () => {
     expect(parseTeamParam("0,-1,1,2,3,4,5,6,7", valid)).toEqual([1, 2, 3, 4, 5, 6]);
+  });
+});
+
+describe("buildTeamQuery", () => {
+  it("returns an empty string for an empty team", () => {
+    expect(buildTeamQuery([])).toBe("");
+  });
+
+  it("formats member ids into a ?p= query string", () => {
+    expect(buildTeamQuery([6])).toBe("?p=6");
+    expect(buildTeamQuery([6, 25, 150])).toBe("?p=6,25,150");
   });
 });

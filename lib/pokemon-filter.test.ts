@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PokemonCardData } from "./grid-data";
-import { filterPokemon } from "./pokemon-filter";
+import { filterPokemon, filterSuggestions, MAX_SUGGESTIONS } from "./pokemon-filter";
 
 const list: PokemonCardData[] = [
   { id: 1, name: "bulbasaur", types: ["grass", "poison"], generation: 1 },
@@ -10,7 +10,7 @@ const list: PokemonCardData[] = [
   { id: 250, name: "ho-oh", types: ["fire", "flying"], generation: 2 },
 ];
 
-const names = (result: PokemonCardData[]) => result.map((p) => p.name);
+const names = (result: { name: string }[]) => result.map((p) => p.name);
 const none = { query: "", type: null, generation: null };
 
 describe("filterPokemon", () => {
@@ -48,5 +48,30 @@ describe("filterPokemon", () => {
     expect(
       names(filterPokemon(list, { query: "ho", type: "flying", generation: 2 })),
     ).toEqual(["ho-oh"]);
+  });
+});
+
+describe("filterSuggestions", () => {
+  const many = Array.from({ length: 12 }, (_, i) => ({
+    id: i + 1,
+    name: `mon-${i + 1}`,
+  }));
+
+  it("returns the first MAX_SUGGESTIONS items when the query is blank", () => {
+    expect(filterSuggestions(many, "   ")).toEqual(many.slice(0, MAX_SUGGESTIONS));
+  });
+
+  it("matches by name substring or exact id (with optional #) and caps results", () => {
+    expect(names(filterSuggestions(list, "  #25 "))).toEqual(["pikachu"]);
+    expect(names(filterSuggestions(list, "a", [], 2))).toEqual(["bulbasaur", "charizard"]);
+  });
+
+  it("excludes already selected ids before slicing or matching", () => {
+    expect(names(filterSuggestions(list, "", [1, 25]))).toEqual([
+      "charizard",
+      "cyndaquil",
+      "ho-oh",
+    ]);
+    expect(names(filterSuggestions(list, "25", [25]))).toEqual([]);
   });
 });
