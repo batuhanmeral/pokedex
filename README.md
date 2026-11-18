@@ -29,7 +29,7 @@ Pokedex brings every species from the first nine generations together in a singl
 
 | Category | Technology |
 | :--- | :--- |
-| Framework | [Next.js 15](https://nextjs.org) (App Router) |
+| Framework | [Next.js 16](https://nextjs.org) (App Router) |
 | Language | [TypeScript](https://www.typescriptlang.org) |
 | Styling | [Tailwind CSS 4](https://tailwindcss.com) |
 | Data source | [PokeAPI](https://pokeapi.co) |

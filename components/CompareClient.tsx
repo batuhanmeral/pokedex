@@ -16,17 +16,15 @@ import type { Pokemon, PokemonListItem } from "@/lib/types";
 const MAX_BASE_STAT = 255;
 
 function usePokemon(id: string): { pokemon: Pokemon | null; loading: boolean } {
-  const [pokemon, setPokemon] = useState<Pokemon | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{
+    id: string;
+    pokemon: Pokemon | null;
+  }>({ id: "", pokemon: null });
 
   useEffect(() => {
-    if (!id) {
-      setPokemon(null);
-      return;
-    }
+    if (!id) return;
 
     let cancelled = false;
-    setLoading(true);
 
     fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
       .then((res) => {
@@ -34,13 +32,10 @@ function usePokemon(id: string): { pokemon: Pokemon | null; loading: boolean } {
         return res.json() as Promise<Pokemon>;
       })
       .then((data) => {
-        if (!cancelled) setPokemon(data);
+        if (!cancelled) setResult({ id, pokemon: data });
       })
       .catch(() => {
-        if (!cancelled) setPokemon(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setResult({ id, pokemon: null });
       });
 
     return () => {
@@ -48,7 +43,9 @@ function usePokemon(id: string): { pokemon: Pokemon | null; loading: boolean } {
     };
   }, [id]);
 
-  return { pokemon, loading };
+  if (!id) return { pokemon: null, loading: false };
+  if (result.id !== id) return { pokemon: null, loading: true };
+  return { pokemon: result.pokemon, loading: false };
 }
 
 const MAX_SUGGESTIONS = 8;

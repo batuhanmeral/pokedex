@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Next.js 15 (App Router) + TypeScript + Tailwind 4 Pokedex; veri PokeAPI'den gelir.
+Next.js 16 (App Router) + TypeScript + Tailwind 4 Pokedex; veri PokeAPI'den gelir.
 Paket yöneticisi npm. Node `^22.12.0 || ^24 || >=26` (Vitest 5 gereksinimi).
 
 ## Commands

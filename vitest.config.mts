@@ -6,8 +6,7 @@ export default defineConfig({
     // tsconfig.json'daki "@/*" yolunu Vitest'e de tanıt
     alias: { "@": fileURLToPath(new URL("./", import.meta.url)) },
   },
-  // tsconfig "jsx: preserve" (Next için) JSX'i dönüştürmüyor; dönüştürülmezse
-  // kapsam ölçümü .tsx dosyalarını parse edemeyip sessizce dışarıda bırakıyor
+  // JSX'i otomatik runtime ile dönüştür ki kapsam ölçümü .tsx dosyalarını da parse edebilsin
   oxc: { jsx: { runtime: "automatic" } },
   test: {
     environment: "node",
@@ -20,7 +19,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       // Bileşenler ve sayfalar da ölçülür ki yüzde gerçek durumu göstersin
-      include: ["lib/**/*.ts", "middleware.ts", "components/**/*.tsx", "app/**/*.tsx"],
+      include: ["lib/**/*.ts", "proxy.ts", "components/**/*.tsx", "app/**/*.tsx"],
       exclude: ["lib/types.ts", "**/*.test.ts"],
       reporter: ["text", "html"],
       // Eşikler ölçülen değerin ~1 puan altında (2026-11-18: st 37.2, br 25.9,
