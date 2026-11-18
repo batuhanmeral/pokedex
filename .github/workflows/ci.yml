@@ -30,7 +30,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      # Testler + kapsam eşikleri (vitest.config.mts)
+      - run: npm run test:coverage
       # Statik sayfalar build sırasında PokeAPI'den üretilir; ağ gerekir.
       # scripts/smoke.sh sunucu başlattığı ve hiçbir kontrolü exit koduna
       # yansıtmadığı için CI'da değil.

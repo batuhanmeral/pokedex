@@ -1,6 +1,9 @@
 name: Security
 
 on:
+  # main'e doğrudan push edilen bir secret'ı bir ay beklemeden yakalamak için
+  push:
+    branches: [main]
   pull_request:
   # Aylık: kod değişmese de yeni kurallar ve sızıntı imzaları çıkar.
   schedule:

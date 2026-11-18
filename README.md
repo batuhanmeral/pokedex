@@ -38,7 +38,7 @@ Pokedex brings every species from the first nine generations together in a singl
 
 ## Development
 
-Requires Node.js `^22.12.0 || ^24 || >=26`; CI uses the version pinned in `.nvmrc`.
+Requires Node.js `^22.12.0 || ^24 || >=26` (declared in `engines`); CI uses the version pinned in `.nvmrc`.
 
 ```bash
 npm install
@@ -67,10 +67,10 @@ GitHub Actions runs two workflows. Every action is pinned to a commit SHA and ev
 
 | Check | Workflow | Runs on | What it does |
 | :--- | :--- | :--- | :--- |
-| `build` | `ci.yml` | push to `main`, pull requests | `npm ci`, lint, typecheck, unit tests, `next build` (Node from `.nvmrc`) |
-| `scan` | `security.yml` | pull requests, monthly, manual | gitleaks (full history), Semgrep (TypeScript, React, Next.js, GitHub Actions rules), zizmor (workflow audit), dependency review on PRs |
+| `build` | `ci.yml` | push to `main`, pull requests | `npm ci`, lint, typecheck, unit tests with coverage thresholds, `next build` (Node from `.nvmrc`) |
+| `scan` | `security.yml` | push to `main`, pull requests, monthly, manual | gitleaks (full history), Semgrep (TypeScript, React, Next.js, GitHub Actions rules), zizmor (workflow audit), dependency review on PRs |
 
-Blocking thresholds: any gitleaks finding, Semgrep `ERROR`/`WARNING`, zizmor `medium` and above, newly added dependencies with `high`/`critical` advisories. Details (in Turkish) are in `.docs/ci-guvenlik.md`.
+Both checks are required on `main` by a repository ruleset. Blocking thresholds: any gitleaks finding, Semgrep `ERROR`/`WARNING`, zizmor `medium` and above, newly added dependencies with `high`/`critical` advisories. Details (in Turkish) are in `.docs/ci-guvenlik.md`.
 
 ## Deploy
 
