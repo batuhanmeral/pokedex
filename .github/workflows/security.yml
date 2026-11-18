@@ -1,0 +1,60 @@
+name: Security
+
+on:
+  pull_request:
+  # Aylık: kod değişmese de yeni kurallar ve sızıntı imzaları çıkar.
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Tarayıcılar digest'e sabitlenmiş imajlardan çalışır; tag ve digest birlikte güncellenir.
+env:
+  SEMGREP_IMAGE: semgrep/semgrep:1.183.0@sha256:2e45517a85e13a9cca14a2a00df6bb48affd66b8ebfae1b0991cd57578362fb0
+  ZIZMOR_IMAGE: ghcr.io/zizmorcore/zizmor:1.31.1@sha256:42d409dbb851d4c5d35a058cf042b828bea1e3f2884378c526eb0974780e18d9
+  GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
+
+jobs:
+  scan:
+    name: scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # gitleaks tüm geçmişi tarar
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: gitleaks (full history)
+        run: docker run --rm -v "$PWD:/repo:ro" "$GITLEAKS_IMAGE" git /repo --redact --no-banner -v
+
+      # ERROR ve WARNING engeller. p/nextjs şu an boş bir kural seti; dolunca
+      # kendiliğinden devreye girer.
+      # Önceki tarayıcı başarısız olsa da sonrakiler çalışır; job yine kırmızı biter.
+      - name: Semgrep
+        if: ${{ !cancelled() }}
+        run: >-
+          docker run --rm -v "$PWD:/src:ro" -w /src "$SEMGREP_IMAGE"
+          semgrep scan --metrics=off --error
+          --severity ERROR --severity WARNING
+          --config p/typescript --config p/react --config p/nextjs --config p/github-actions
+
+      # Token verilmez (PR job'ında secret yok): zizmor çevrimiçi denetimleri
+      # (impostor commit, bilinen açıklı action) atlar, çevrimdışı denetimler çalışır.
+      - name: zizmor
+        if: ${{ !cancelled() }}
+        run: docker run --rm -v "$PWD:/src:ro" "$ZIZMOR_IMAGE" --min-severity medium /src
+
+      # Yalnızca PR'da: PR'ın eklediği bağımlılıklarda high/critical açık varsa engeller.
+      - name: Dependency review
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high

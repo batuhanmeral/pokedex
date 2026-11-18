@@ -38,7 +38,7 @@ Pokedex brings every species from the first nine generations together in a singl
 
 ## Development
 
-Requires Node.js `^22.12.0 || ^24 || >=26`.
+Requires Node.js `^22.12.0 || ^24 || >=26`; CI uses the version pinned in `.nvmrc`.
 
 ```bash
 npm install
@@ -60,6 +60,17 @@ npm run smoke                       # manual smoke check; run `npm run build` fi
 
 Tests never touch the network: PokeAPI is mocked and unmocked `fetch` calls fail the test.
 Detailed documentation lives in `.docs/` and is written in Turkish.
+
+## CI and security
+
+GitHub Actions runs two workflows. Every action is pinned to a commit SHA and every scanner image to a digest.
+
+| Check | Workflow | Runs on | What it does |
+| :--- | :--- | :--- | :--- |
+| `build` | `ci.yml` | push to `main`, pull requests | `npm ci`, lint, typecheck, unit tests, `next build` (Node from `.nvmrc`) |
+| `scan` | `security.yml` | pull requests, monthly, manual | gitleaks (full history), Semgrep (TypeScript, React, Next.js, GitHub Actions rules), zizmor (workflow audit), dependency review on PRs |
+
+Blocking thresholds: any gitleaks finding, Semgrep `ERROR`/`WARNING`, zizmor `medium` and above, newly added dependencies with `high`/`critical` advisories. Details (in Turkish) are in `.docs/ci-guvenlik.md`.
 
 ## Deploy
 
