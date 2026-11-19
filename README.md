@@ -59,7 +59,6 @@ npm run smoke                       # manual smoke check; run `npm run build` fi
 ```
 
 Tests never touch the network: PokeAPI is mocked and unmocked `fetch` calls fail the test.
-Detailed documentation lives in `.docs/` and is written in Turkish.
 
 ## CI and security
 
@@ -70,7 +69,7 @@ GitHub Actions runs two workflows. Every action is pinned to a commit SHA and ev
 | `build` | `ci.yml` | push to `main`, pull requests | `npm ci`, lint, typecheck, unit tests with coverage thresholds, `next build` (Node from `.nvmrc`) |
 | `scan` | `security.yml` | push to `main`, pull requests, monthly, manual | gitleaks (full history), Semgrep (TypeScript, React, Next.js, GitHub Actions rules), zizmor (workflow audit), dependency review on PRs |
 
-Both checks are required on `main` by a repository ruleset. Blocking thresholds: any gitleaks finding, Semgrep `ERROR`/`WARNING`, zizmor `medium` and above, newly added dependencies with `high`/`critical` advisories. Details (in Turkish) are in `.docs/ci-guvenlik.md`.
+Both checks are required on `main` by a repository ruleset. Blocking thresholds: any gitleaks finding, Semgrep `ERROR`/`WARNING`, zizmor `medium` and above, newly added dependencies with `high`/`critical` advisories.
 
 ## Deploy
 
