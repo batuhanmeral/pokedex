@@ -10,7 +10,8 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Yalnızca yerini yenisi alan PR çalıştırmaları iptal edilir; main çalıştırmaları tamamlanır.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
