@@ -44,6 +44,8 @@ export const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  // "X-Powered-By: Next.js" başlığı gönderilmez; çatı bilgisini dışarı vermeye gerek yok.
+  poweredByHeader: false,
   async headers() {
     return [
       {

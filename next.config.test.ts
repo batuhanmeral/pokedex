@@ -32,6 +32,10 @@ const EXPECTED_CSP: Record<string, string[]> = {
 };
 
 describe("next.config security headers", () => {
+  it("does not advertise the framework with X-Powered-By", () => {
+    expect(nextConfig.poweredByHeader).toBe(false);
+  });
+
   it("applies the security headers rule to all paths", async () => {
     const rules = await nextConfig.headers!();
     expect(rules).toEqual([
